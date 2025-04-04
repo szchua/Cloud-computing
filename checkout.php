@@ -6,6 +6,12 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
+if ($_SESSION['is_admin']) {
+    header("Location: admin_products.php");
+    exit();
+}
+
+
 
 if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
     header("Location: cart.php");

@@ -3,7 +3,11 @@ session_start();
 include 'db_config.php';
 
 if (isset($_SESSION['user_id'])) {
-    header("Location: index.php");
+    if ($_SESSION['is_admin']) {
+        header("Location: admin_products.php");
+    } else {
+        header("Location: index.php");
+    }
     exit();
 }
 
@@ -11,10 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $email = $_POST['email'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $username, $email, $password);
+    $is_admin = 0; // Default to normal user
+    $stmt = $conn->prepare("INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("sssi", $username, $email, $password, $is_admin);
     if ($stmt->execute()) {
         $_SESSION['user_id'] = $conn->insert_id;
+        $_SESSION['is_admin'] = $is_admin;
         header("Location: index.php");
         exit();
     } else {
@@ -36,7 +42,7 @@ $conn->close();
         body {
             background: url('https://images.pexels.com/photos/1205651/pexels-photo-1205651.jpeg?cs=srgb&dl=pexels-emily-ranquist-493228-1205651.jpg&fm=jpg') no-repeat center center fixed;
             background-size: cover;
-            background-color: #e6f0fa; /* Fallback gradient */
+            background-color: #e6f0fa;
             color: #333;
         }
         .signup-container {

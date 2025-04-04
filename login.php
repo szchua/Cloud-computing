@@ -3,21 +3,30 @@ session_start();
 include 'db_config.php';
 
 if (isset($_SESSION['user_id'])) {
-    header("Location: index.php");
+    if ($_SESSION['is_admin']) {
+        header("Location: admin_products.php");
+    } else {
+        header("Location: index.php");
+    }
     exit();
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
-    $stmt = $conn->prepare("SELECT user_id, password FROM users WHERE username = ?");
+    $stmt = $conn->prepare("SELECT user_id, password, is_admin FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($user = $result->fetch_assoc()) {
         if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['user_id'];
-            header("Location: index.php");
+            $_SESSION['is_admin'] = $user['is_admin'];
+            if ($user['is_admin']) {
+                header("Location: admin_products.php");
+            } else {
+                header("Location: index.php");
+            }
             exit();
         } else {
             $error = "Invalid username or password.";
@@ -41,7 +50,7 @@ $conn->close();
         body {
             background: url('https://images.pexels.com/photos/1205651/pexels-photo-1205651.jpeg?cs=srgb&dl=pexels-emily-ranquist-493228-1205651.jpg&fm=jpg') no-repeat center center fixed;
             background-size: cover;
-            background-color: #e6f0fa; /* Fallback gradient */
+            background-color: #e6f0fa;
             color: #333;
         }
         .login-container {
