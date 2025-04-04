@@ -11,8 +11,6 @@ if ($_SESSION['is_admin']) {
     exit();
 }
 
-
-
 $user_id = $_SESSION['user_id'];
 ?>
 
@@ -74,11 +72,11 @@ $user_id = $_SESSION['user_id'];
                     echo "<tr>";
                     echo "<td>" . htmlspecialchars($item['name']) . "</td>";
                     echo "<td>" . $item['quantity'] . "</td>";
-                    echo "<td>$" . number_format($item['price'], 2) . "</td>";
-                    echo "<td>$" . number_format($subtotal, 2) . "</td>";
+                    echo "<td>RM " . number_format($item['price'], 2) . "</td>";
+                    echo "<td>RM " . number_format($subtotal, 2) . "</td>";
                     echo "</tr>";
                 }
-                echo "<tr><td colspan='3'><strong>Total</strong></td><td><strong>$" . number_format($order['total'], 2) . "</strong></td></tr>";
+                echo "<tr><td colspan='3'><strong>Total</strong></td><td><strong>RM " . number_format($order['total'], 2) . "</strong></td></tr>";
                 echo "</tbody></table>";
                 echo "</div>";
                 echo "</div>";
@@ -97,6 +95,6 @@ $user_id = $_SESSION['user_id'];
             window.location.href = "logout.php";
         }
     }
-</script>
+    </script>
 </body>
 </html>

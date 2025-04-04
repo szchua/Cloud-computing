@@ -55,7 +55,7 @@ if (isset($_POST['add_to_cart'])) {
         .quantity-input { width: 50px; display: inline-block; }
         .product-image { 
             width: 100%; 
-            height: 75px; 
+            height: 110px; 
             object-fit: contain; 
             border-radius: 10px 10px 0 0; 
             background-color: #fff; 
@@ -95,7 +95,7 @@ if (isset($_POST['add_to_cart'])) {
                 echo "<img src='" . $row['image'] . "' class='product-image' alt='" . $row['name'] . "' onerror=\"this.src='https://via.placeholder.com/150?text=Image+Not+Found';\">";
                 echo "<div class='card-body'>";
                 echo "<h5 class='card-title'>" . $row['name'] . "</h5>";
-                echo "<p class='card-text'>Price: $" . number_format($row['price'], 2) . "</p>";
+                echo "<p class='card-text'>Price: RM " . number_format($row['price'], 2) . "</p>";
                 echo "<p class='card-text'>Stock: " . $row['stock'] . "</p>";
                 echo "<button type='button' class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#quantityModal" . $row['id'] . "' $disabled>Add to Cart</button>";
                 echo "</div>";
@@ -135,9 +135,9 @@ if (isset($_POST['add_to_cart'])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function confirmLogout(event) {
-            event.preventDefault(); // Prevent the default link behavior
+            event.preventDefault();
             if (confirm("Are you sure you want to logout?")) {
-                window.location.href = "logout.php"; // Redirect to logout.php if confirmed
+                window.location.href = "logout.php";
             }
         }
     </script>
