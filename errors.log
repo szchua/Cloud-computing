@@ -1,0 +1,18 @@
+POST Data: Array
+(
+    [product_id] => 2
+    [quantity] => 1
+    [add_to_cart] => 
+)
+POST Data: Array
+(
+    [product_id] => 2
+    [quantity] => 2
+    [add_to_cart] => 
+)
+POST Data: Array
+(
+    [product_id] => 1
+    [quantity] => 5
+    [add_to_cart] => 
+)

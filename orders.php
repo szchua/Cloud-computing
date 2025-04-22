@@ -41,7 +41,7 @@ $user_id = $_SESSION['user_id'];
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="index.php">Back to Store</a></li>
-                    <li class="nav-item"><a class="nav-link" href="cart.php">Cart (<?php echo array_sum($_SESSION['cart'] ?? []); ?>)</a></li>
+                    <li class="nav-item"><a class="nav-link" href="cart.php">Cart</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" onclick="confirmLogout(event)">Logout</a></li>
                 </ul>
             </div>

@@ -2,6 +2,7 @@
 session_start();
 include 'db_config.php';
 
+// Redirect if not logged in or if user is an admin
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -11,7 +12,18 @@ if ($_SESSION['is_admin']) {
     exit();
 }
 
-if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
+$user_id = $_SESSION['user_id'];
+
+// Fetch cart items from the database
+$stmt = $conn->prepare("SELECT ci.product_id, ci.quantity, p.name, p.price, p.stock 
+                        FROM cart_items ci 
+                        JOIN products p ON ci.product_id = p.id 
+                        WHERE ci.user_id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$cart_items = $stmt->get_result();
+
+if ($cart_items->num_rows == 0) {
     header("Location: cart.php");
     exit();
 }
@@ -30,43 +42,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['complete_transaction']
     $card_number = $_POST['card_number'];
     $card_expiry = $_POST['card_expiry'];
     $card_cvc = $_POST['card_cvc'];
-    $user_id = $_SESSION['user_id'];
     $total = 0;
 
+    // Recalculate total and check stock
     $stock_ok = true;
-    foreach ($_SESSION['cart'] as $id => $quantity) {
-        $result = $conn->query("SELECT price, stock FROM products WHERE id = $id");
-        $product = $result->fetch_assoc();
-        if ($product['stock'] < $quantity) {
+    $cart_items->data_seek(0); // Reset pointer to iterate again
+    $items_to_process = [];
+    while ($item = $cart_items->fetch_assoc()) {
+        if ($item['stock'] < $item['quantity']) {
             $stock_ok = false;
             break;
         }
-        $total += $product['price'] * $quantity;
+        $subtotal = $item['price'] * $item['quantity'];
+        $total += $subtotal;
+        $items_to_process[] = $item;
     }
 
     if ($stock_ok) {
         if (strlen($card_number) == 16 && preg_match("/^\d{2}\/\d{2}$/", $card_expiry) && strlen($card_cvc) == 3) {
+            // Insert order
             $stmt = $conn->prepare("INSERT INTO orders (customer_name, customer_email, total, user_id) VALUES (?, ?, ?, ?)");
             $stmt->bind_param("ssdi", $customer_name, $customer_email, $total, $user_id);
             $stmt->execute();
             $order_id = $conn->insert_id;
 
+            // Insert order items and update stock
             $stmt_items = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
             $stmt_stock = $conn->prepare("UPDATE products SET stock = stock - ? WHERE id = ?");
-            foreach ($_SESSION['cart'] as $id => $quantity) {
-                $result = $conn->query("SELECT price FROM products WHERE id = $id");
-                $product = $result->fetch_assoc();
-                $price = $product['price'];
-                $stmt_items->bind_param("iiid", $order_id, $id, $quantity, $price);
+            foreach ($items_to_process as $item) {
+                $product_id = $item['product_id'];
+                $quantity = $item['quantity'];
+                $price = $item['price'];
+                $stmt_items->bind_param("iiid", $order_id, $product_id, $quantity, $price);
                 $stmt_items->execute();
-                $stmt_stock->bind_param("ii", $quantity, $id);
+                $stmt_stock->bind_param("ii", $quantity, $product_id);
                 $stmt_stock->execute();
             }
 
-            unset($_SESSION['cart']);
+            // Clear the user's cart
+            $stmt_clear_cart = $conn->prepare("DELETE FROM cart_items WHERE user_id = ?");
+            $stmt_clear_cart->bind_param("i", $user_id);
+            $stmt_clear_cart->execute();
+
+            // Clean up
             $stmt->close();
             $stmt_items->close();
             $stmt_stock->close();
+            $stmt_clear_cart->close();
             $conn->close();
             header("Location: index.php?transaction=success");
             exit();
@@ -138,21 +160,16 @@ $show_payment_form = isset($_POST['confirm_payment']);
                 <tbody>
                     <?php
                     $total = 0;
-                    foreach ($_SESSION['cart'] as $id => $quantity) {
-                        $stmt = $conn->prepare("SELECT name, price FROM products WHERE id = ?");
-                        $stmt->bind_param("i", $id);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
-                        $product = $result->fetch_assoc();
-                        $subtotal = $product['price'] * $quantity;
+                    $cart_items->data_seek(0); // Reset pointer to iterate
+                    while ($item = $cart_items->fetch_assoc()) {
+                        $subtotal = $item['price'] * $item['quantity'];
                         $total += $subtotal;
                         echo "<tr>";
-                        echo "<td>" . htmlspecialchars($product['name']) . "</td>";
-                        echo "<td>RM " . number_format($product['price'], 2) . "</td>";
-                        echo "<td>" . $quantity . "</td>";
+                        echo "<td>" . htmlspecialchars($item['name']) . "</td>";
+                        echo "<td>RM " . number_format($item['price'], 2) . "</td>";
+                        echo "<td>" . $item['quantity'] . "</td>";
                         echo "<td>RM " . number_format($subtotal, 2) . "</td>";
                         echo "</tr>";
-                        $stmt->close();
                     }
                     echo "<tr><td colspan='3'><strong>Total</strong></td><td><strong>RM " . number_format($total, 2) . "</strong></td></tr>";
                     ?>
